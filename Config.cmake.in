@@ -1,0 +1,38 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+
+##############################################################
+# Debug prints
+##############################################################
+
+message("CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+
+
+##############################################################
+# CMake modules and macro files
+##############################################################
+
+
+##############################################################
+# Dependency Handling
+##############################################################
+
+
+############
+# Components
+############
+
+set(_wl_supported_components core)
+
+foreach(_comp ${wl_FIND_COMPONENTS})
+  if (NOT _comp IN_LIST _wl_supported_components)
+    set(wl_FOUND False)
+    set(wl_NOT_FOUND_MESSAGE "Unsupported component: ${_comp}")
+  endif()
+  include("${CMAKE_CURRENT_LIST_DIR}/wl${_comp}Targets.cmake")
+endforeach()
+
+get_filename_component(WL_CONFIG_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+message(STATUS "Found wl: ${WL_CONFIG_DIR} (found version ${wl_VERSION})")
