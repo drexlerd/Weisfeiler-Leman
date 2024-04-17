@@ -9,7 +9,7 @@ from pathlib import Path
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 HERE = Path(__file__).resolve().parent
 
 
@@ -72,7 +72,7 @@ setup(
     name="pykwl",
     version=__version__,
     author="Simon Stahlberg, Dominik Drexler",
-    author_email=r"{simon.stahlberg,dominik.drexler}@liu.se",
+    author_email="simon.stahlberg@gmail.com,dominik.drexler@liu.se",
     url="https://github.com/drexlerd/Weisfeiler-Leman",
     description="Weisfeiler-Leman library",
     long_description="",
