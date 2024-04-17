@@ -6,9 +6,13 @@
 
 namespace py = pybind11;
 
+void init_kwl(py::module_&);
+
 PYBIND11_MODULE(_pykwl, m)
 {
     m.doc() = "Python bindings the Weisfeiler-Leman library.";
+
+    init_kwl(m);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

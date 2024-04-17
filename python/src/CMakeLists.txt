@@ -5,7 +5,8 @@ find_package(pybind11)
 pybind11_add_module(_pykwl MODULE)
 target_sources(_pykwl
     PRIVATE
-        main.cpp)
+        main.cpp
+        pykwl/bindings.cpp)
 target_link_libraries(_pykwl
     PRIVATE
         pybind11::module
