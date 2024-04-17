@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <numeric>
 #include <stdexcept>
 #include <tuple>
 #include <unordered_map>
@@ -34,22 +33,18 @@ inline static void lexical_sort(std::vector<int>& items1, std::vector<int>& item
 {
     assert(items1.size() == items2.size());
 
-    std::vector<size_t> indices(items1.size());
-    std::iota(indices.begin(), indices.end(), 0);
-
-    // Sort the indices based on corresponding values in items1 and items2
-    std::sort(indices.begin(), indices.end(), [&](size_t i, size_t j) { return std::tie(items1[i], items2[i]) < std::tie(items1[j], items2[j]); });
-
-    // Reorder items1 and items2 according to the sorted indices in-place
-    for (size_t i = 0; i < indices.size(); ++i)
+    std::vector<std::pair<int, int>> paired_items(items1.size());
+    for (size_t i = 0; i < items1.size(); ++i)
     {
-        while (i != indices[i])
-        {
-            size_t next = indices[i];
-            std::swap(items1[i], items1[next]);
-            std::swap(items2[i], items2[next]);
-            std::swap(indices[i], indices[next]);
-        }
+        paired_items[i] = { items1[i], items2[i] };
+    }
+
+    std::sort(paired_items.begin(), paired_items.end());
+
+    for (size_t i = 0; i < items1.size(); ++i)
+    {
+        items1[i] = paired_items[i].first;
+        items2[i] = paired_items[i].second;
     }
 }
 
