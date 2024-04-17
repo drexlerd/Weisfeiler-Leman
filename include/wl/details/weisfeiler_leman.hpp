@@ -18,11 +18,13 @@ private:
     std::map<ColorMultiset, int> m_color_function;
     int m_k;
 
-    int get_color_k1(ColorMultiset&& key);
+    int get_color(ColorMultiset&& key);
 
-    std::tuple<int, std::vector<int>, std::vector<int>> compute_coloring_k1(const Graph& graph);
+    int get_subgraph_color(int src_node, int dst_node, const Graph& graph);
 
-    std::tuple<int, std::vector<int>, std::vector<int>> compute_coloring_k2(const Graph& graph);
+    std::tuple<int, std::vector<int>, std::vector<int>> k1_fwl(const Graph& graph);
+
+    std::tuple<int, std::vector<int>, std::vector<int>> k2_fwl(const Graph& graph);
 
 public:
     explicit WeisfeilerLeman(int k);

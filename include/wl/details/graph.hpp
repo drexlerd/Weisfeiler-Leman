@@ -23,7 +23,7 @@ private:
     bool m_directed;
 
 public:
-    Graph(bool directed);
+    explicit Graph(bool directed);
 
     int add_node(int label = 0);
 
