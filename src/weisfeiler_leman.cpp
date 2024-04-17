@@ -159,6 +159,7 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::compute_col
     }
 
     auto [unique, counts] = get_frequencies(current_coloring);
+    lexical_sort(unique, counts);
     return { num_iterations, std::move(unique), std::move(counts) };
 }
 
