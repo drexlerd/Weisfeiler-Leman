@@ -3,7 +3,7 @@ name: Build Source Distribution
 on:
   push:
     branches:
-      - dynamic
+      - main
 
 jobs:
   build_wheels:
