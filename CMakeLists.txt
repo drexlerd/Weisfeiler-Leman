@@ -15,7 +15,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Build Targets
 ##############################################################
 
-option(BUILD_PYWL "Build" OFF)
+option(BUILD_PYKWL "Build" OFF)
 option(BUILD_TESTS "Build" OFF)
 option(BUILD_PROFILING "Build" OFF)
 
@@ -81,6 +81,8 @@ configure_ccache()
 # Add library and executable targets
 ##############################################################
 
+message("CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+
 # ------------
 # Target WL
 # ------------
@@ -89,7 +91,7 @@ add_subdirectory(src)
 # -------------------
 # Target Python WL
 # -------------------
-if(BUILD_PYWL)
+if(BUILD_PYKWL)
     add_subdirectory(python/src)
 endif()
 

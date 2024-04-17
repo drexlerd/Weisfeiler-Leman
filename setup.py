@@ -48,7 +48,7 @@ class CMakeBuild(build_ext):
 
         # Build dlplan
         cmake_args = [
-            "-DBUILD_PYWL=On",
+            "-DBUILD_PYKWL=On",
             f"-DWL_VERSION_INFO={__version__}",
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
@@ -69,12 +69,12 @@ class CMakeBuild(build_ext):
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
-    name="pywl",
+    name="pykwl",
     version=__version__,
     author="Simon Stahlberg, Dominik Drexler",
     author_email=r"{simon.stahlberg,dominik.drexler}@liu.se",
     url="https://github.com/drexlerd/Weisfeiler-Leman",
-    description="WL library",
+    description="Weisfeiler-Leman library",
     long_description="",
     install_requires=["cmake>=3.21"],
     packages=find_packages(where="python/src"),
@@ -82,7 +82,7 @@ setup(
     package_data={
         "": ["*.pyi"],
     },
-    ext_modules=[CMakeExtension("_pywl")],
+    ext_modules=[CMakeExtension("_pykwl")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={
