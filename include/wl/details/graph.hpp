@@ -16,8 +16,6 @@ private:
     std::vector<std::vector<int>> m_ingoing_adjacent;
     std::vector<std::unordered_map<int, std::vector<int>>> m_outgoing_edges_between;
     std::vector<std::unordered_map<int, std::vector<int>>> m_ingoing_edges_between;
-    std::vector<int> m_edge_sources;
-    std::vector<int> m_edge_destinations;
     std::vector<int> m_node_labels;
     std::vector<int> m_edge_labels;
     bool m_directed;
@@ -28,10 +26,6 @@ public:
     int add_node(int label = 0);
 
     void add_edge(int src_node, int dst_node, int label = 0);
-
-    int get_source(int edge) const;
-
-    int get_destination(int edge) const;
 
     const std::vector<int>& get_outbound_edges(int node) const;
 
@@ -54,6 +48,8 @@ public:
     const std::vector<int>& get_edge_labels() const;
 
     const std::vector<int>& get_edges(int src_node, int dst_node) const;
+
+    bool is_directed() const;
 };
 
 }

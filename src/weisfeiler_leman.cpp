@@ -132,22 +132,21 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(cons
 
         for (int node = 0; node < num_nodes; ++node)
         {
-            auto ingoing_edge_colors = get_colors_from_indices(graph.get_edge_labels(), graph.get_inbound_edges(node));
             auto outgoing_edge_colors = get_colors_from_indices(graph.get_edge_labels(), graph.get_outbound_edges(node));
-
-            auto ingoing_node_colors = get_colors_from_indices(current_coloring, graph.get_inbound_adjacent(node));
             auto outgoing_node_colors = get_colors_from_indices(current_coloring, graph.get_outbound_adjacent(node));
+            auto ingoing_edge_colors = graph.is_directed() ? get_colors_from_indices(graph.get_edge_labels(), graph.get_inbound_edges(node)) : std::vector<int>();
+            auto ingoing_node_colors = graph.is_directed() ? get_colors_from_indices(current_coloring, graph.get_inbound_adjacent(node)) : std::vector<int>();
 
             // Sort the vectors using lexical sorting to ensure that the actual order of retrieval is irrelevant.
 
-            lexical_sort(ingoing_node_colors, ingoing_edge_colors);
             lexical_sort(outgoing_node_colors, outgoing_edge_colors);
+            lexical_sort(ingoing_node_colors, ingoing_edge_colors);
 
             next_coloring[node] = get_color({ current_coloring[node],
-                                              std::move(ingoing_edge_colors),
                                               std::move(outgoing_edge_colors),
-                                              std::move(ingoing_node_colors),
-                                              std::move(outgoing_node_colors) });
+                                              std::move(outgoing_node_colors),
+                                              std::move(ingoing_edge_colors),
+                                              std::move(ingoing_node_colors) });
         }
 
         if (test_fixpoint(current_coloring, next_coloring))
@@ -176,13 +175,13 @@ int WeisfeilerLeman::get_subgraph_color(int src_node, int dst_node, const Graph&
     auto dst_label = node_labels[dst_node];
 
     auto forward_edge_labels = get_colors_from_indices(edge_labels, graph.get_edges(src_node, dst_node));
-    auto backward_edge_labels = get_colors_from_indices(edge_labels, graph.get_edges(dst_node, src_node));
     auto self_src_edge_labels = get_colors_from_indices(edge_labels, graph.get_edges(src_node, src_node));
-    auto self_dst_edge_labels = get_colors_from_indices(edge_labels, graph.get_edges(dst_node, dst_node));
+    auto backward_edge_labels = graph.is_directed() ? get_colors_from_indices(edge_labels, graph.get_edges(dst_node, src_node)) : std::vector<int>();
+    auto self_dst_edge_labels = graph.is_directed() ? get_colors_from_indices(edge_labels, graph.get_edges(dst_node, dst_node)) : std::vector<int>();
 
     std::sort(forward_edge_labels.begin(), forward_edge_labels.end());
-    std::sort(backward_edge_labels.begin(), backward_edge_labels.end());
     std::sort(self_src_edge_labels.begin(), self_src_edge_labels.end());
+    std::sort(backward_edge_labels.begin(), backward_edge_labels.end());
     std::sort(self_dst_edge_labels.begin(), self_dst_edge_labels.end());
 
     // Graph labels must be non-negative and colors will always be positive.
@@ -190,8 +189,8 @@ int WeisfeilerLeman::get_subgraph_color(int src_node, int dst_node, const Graph&
 
     return get_color({ -pairing_function(src_label, dst_label) - 1,
                        std::move(forward_edge_labels),
-                       std::move(backward_edge_labels),
                        std::move(self_src_edge_labels),
+                       std::move(backward_edge_labels),
                        std::move(self_dst_edge_labels) });
 }
 

@@ -13,8 +13,6 @@ Graph::Graph(bool directed) :
     m_ingoing_adjacent(),
     m_outgoing_edges_between(),
     m_ingoing_edges_between(),
-    m_edge_sources(),
-    m_edge_destinations(),
     m_node_labels(),
     m_edge_labels(),
     m_directed(directed)
@@ -67,8 +65,6 @@ void Graph::add_edge(int src_node, int dst_node, int label)
         m_ingoing_adjacent.at(dst_node).emplace_back(src_node);
         m_outgoing_edges_between.at(src_node).at(dst_node).emplace_back(edge);
         m_ingoing_edges_between.at(dst_node).at(src_node).emplace_back(edge);
-        m_edge_sources.emplace_back(src_node);
-        m_edge_destinations.emplace_back(dst_node);
         m_edge_labels.emplace_back(label);
     }
 
@@ -81,15 +77,9 @@ void Graph::add_edge(int src_node, int dst_node, int label)
         m_ingoing_adjacent.at(src_node).emplace_back(dst_node);
         m_outgoing_edges_between.at(dst_node).at(src_node).emplace_back(edge);
         m_ingoing_edges_between.at(src_node).at(dst_node).emplace_back(edge);
-        m_edge_sources.emplace_back(dst_node);
-        m_edge_destinations.emplace_back(src_node);
         m_edge_labels.emplace_back(label);
     }
 }
-
-int Graph::get_source(int edge) const { return m_edge_sources.at(edge); }
-
-int Graph::get_destination(int edge) const { return m_edge_destinations.at(edge); }
 
 const std::vector<int>& Graph::get_outbound_edges(int node) const { return m_outgoing_edges.at(node); }
 
@@ -112,4 +102,6 @@ const std::vector<int>& Graph::get_node_labels() const { return m_node_labels; }
 const std::vector<int>& Graph::get_edge_labels() const { return m_edge_labels; }
 
 const std::vector<int>& Graph::get_edges(int src_node, int dst_node) const { return m_outgoing_edges_between.at(src_node).at(dst_node); }
+
+bool Graph::is_directed() const { return m_directed; }
 }
