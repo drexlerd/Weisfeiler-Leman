@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 #include <stdexcept>
 #include <tuple>
 #include <unordered_map>
@@ -14,7 +15,7 @@ namespace wl
 inline static int pairing_function(int x, int y)
 {
     // Szudzik's pairing function
-    return x >= y ? x * x + x + y : y * y + x;
+    return std::abs(x >= y ? x * x + x + y : y * y + x);
 }
 
 inline static std::vector<int> get_colors_from_indices(const std::vector<int>& colors, const std::vector<int>& indices)
@@ -94,17 +95,14 @@ WeisfeilerLeman::WeisfeilerLeman(int k) : m_color_function(), m_k(k)
     }
 }
 
-int WeisfeilerLeman::get_color(ColorMultiset&& key)
+int WeisfeilerLeman::get_color(ColorMultiset&& color_multiset)
 {
-    // TODO: Try out Cantor's Pairing Function instead.
-    // https://en.wikipedia.org/wiki/Pairing_function
-
-    auto it = m_color_function.find(key);
+    auto it = m_color_function.find(color_multiset);
 
     if (it == m_color_function.end())
     {
         int color = static_cast<int>(m_color_function.size());
-        m_color_function.emplace(std::move(key), color);
+        m_color_function.emplace(std::move(color_multiset), color);
         return color;
     }
 
@@ -190,8 +188,7 @@ int WeisfeilerLeman::get_subgraph_color(int src_node, int dst_node, const Graph&
     // Graph labels must be non-negative and colors will always be positive.
     // We make the graph labels negative so that they are not confused with colors.
 
-    const auto max_node_label = *std::max(node_labels.begin(), node_labels.end());
-    return get_color({ -index_of_pair(src_label, dst_label, max_node_label + 1) - 1,
+    return get_color({ -pairing_function(src_label, dst_label) - 1,
                        std::move(forward_edge_labels),
                        std::move(backward_edge_labels),
                        std::move(self_src_edge_labels),

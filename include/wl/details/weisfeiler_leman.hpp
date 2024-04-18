@@ -18,7 +18,7 @@ private:
     std::map<ColorMultiset, int> m_color_function;
     int m_k;
 
-    int get_color(ColorMultiset&& key);
+    int get_color(ColorMultiset&& color_multiset);
 
     int get_subgraph_color(int src_node, int dst_node, const Graph& graph);
 
