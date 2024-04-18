@@ -19,7 +19,7 @@ void init_kwl(py::module_& m)
         .def("add_node", &Graph::add_node, py::arg("label") = 0)
         .def("add_edge", &Graph::add_edge, py::arg("src_node"), py::arg("dst_node"), py::arg("label") = 0);
 
-    py::class_<WeisfeilerLeman>(m, "WeisfeilerLehman")  //
+    py::class_<WeisfeilerLeman>(m, "WeisfeilerLeman")  //
         .def(py::init<int>())
         .def("compute_coloring", &WeisfeilerLeman::compute_coloring);
 }
