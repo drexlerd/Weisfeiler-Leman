@@ -10,6 +10,7 @@ _skbuild
 dist
 wl.egg-info
 pywl.egg-info
+pykwl.egg-info
 
 # Profiling
 perf*
@@ -29,6 +30,7 @@ build
 out
 *.sif
 dependencies/installs
+.cache
 
 #CMake
 CMakeLists.txt.user

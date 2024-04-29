@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdlib>
 #include <stdexcept>
 #include <tuple>
@@ -16,18 +17,6 @@ inline static int pairing_function(int x, int y)
 {
     // Szudzik's pairing function
     return std::abs(x >= y ? x * x + x + y : y * y + x);
-}
-
-inline static std::vector<int> get_colors_from_indices(const std::vector<int>& colors, const std::vector<int>& indices)
-{
-    auto result = std::vector<int>(indices.size());
-
-    for (const auto& i : indices)
-    {
-        result.emplace_back(colors[i]);
-    }
-
-    return result;
 }
 
 inline static void lexical_sort(std::vector<int>& items1, std::vector<int>& items2)
@@ -87,7 +76,9 @@ inline static bool test_fixpoint(const std::vector<int>& current_coloring, const
     return fixpoint;
 }
 
-WeisfeilerLeman::WeisfeilerLeman(int k) : m_color_function(), m_k(k)
+WeisfeilerLeman::WeisfeilerLeman(int k) : WeisfeilerLeman(k, false) {}
+
+WeisfeilerLeman::WeisfeilerLeman(int k, bool ignore_counting) : m_color_function(), m_k(k), m_ignore_counting(ignore_counting)
 {
     if (k < 1 || k > 2)
     {
@@ -95,14 +86,62 @@ WeisfeilerLeman::WeisfeilerLeman(int k) : m_color_function(), m_k(k)
     }
 }
 
-int WeisfeilerLeman::get_color(ColorMultiset&& color_multiset)
+int WeisfeilerLeman::get_k() const { return m_k; }
+
+bool WeisfeilerLeman::get_ignore_counting() const { return m_ignore_counting; }
+
+std::vector<Color> WeisfeilerLeman::get_colors(const std::vector<Color>& colors, const std::vector<int>& indices)
 {
-    auto it = m_color_function.find(color_multiset);
+    auto result = std::vector<int>(indices.size());
+
+    for (const auto& i : indices)
+    {
+        result.emplace_back(colors[i]);
+    }
+
+    return result;
+}
+
+std::vector<AdjacentColor> WeisfeilerLeman::get_colors_pairs(const std::vector<Color>& node_colors,
+                                                             const std::vector<int>& node_indices,
+                                                             const std::vector<Color>& edge_colors,
+                                                             const std::vector<int>& edge_indices)
+{
+    assert(node_indices.size() == edge_indices.size());
+
+    std::vector<AdjacentColor> adjacent_colors;
+
+    for (size_t index = 0; index < node_indices.size(); ++index)
+    {
+        adjacent_colors.emplace_back(node_colors[node_indices[index]], edge_colors[edge_indices[index]]);
+    }
+
+    return adjacent_colors;
+}
+
+Color WeisfeilerLeman::get_new_color(NodeColorContext&& node_color_context)
+{
+    auto& first_colors = std::get<1>(node_color_context);
+    auto& second_colors = std::get<2>(node_color_context);
+
+    std::sort(first_colors.begin(), first_colors.end());
+    std::sort(second_colors.begin(), second_colors.end());
+
+    if (m_ignore_counting)
+    {
+        auto first_last = std::unique(first_colors.begin(), first_colors.end());
+        first_colors.erase(first_last, first_colors.end());
+
+        auto second_last = std::unique(second_colors.begin(), second_colors.end());
+        second_colors.erase(second_last, second_colors.end());
+    }
+
+    auto it = m_color_function.find(node_color_context);
 
     if (it == m_color_function.end())
     {
         int color = static_cast<int>(m_color_function.size());
-        m_color_function.emplace(std::move(color_multiset), color);
+        m_color_function.emplace(std::move(node_color_context), color);
         return color;
     }
 
@@ -121,7 +160,7 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(cons
         // We make the graph labels negative so that they are not confused with colors.
 
         auto node_label = -graph.get_node_label(node) - 1;
-        current_coloring[node] = get_color({ node_label, {}, {}, {}, {} });
+        current_coloring[node] = get_new_color({ node_label, {}, {} });
     }
 
     int num_iterations = 0;
@@ -132,21 +171,15 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(cons
 
         for (int node = 0; node < num_nodes; ++node)
         {
-            auto outgoing_edge_colors = get_colors_from_indices(graph.get_edge_labels(), graph.get_outbound_edges(node));
-            auto outgoing_node_colors = get_colors_from_indices(current_coloring, graph.get_outbound_adjacent(node));
-            auto ingoing_edge_colors = graph.is_directed() ? get_colors_from_indices(graph.get_edge_labels(), graph.get_inbound_edges(node)) : std::vector<int>();
-            auto ingoing_node_colors = graph.is_directed() ? get_colors_from_indices(current_coloring, graph.get_inbound_adjacent(node)) : std::vector<int>();
+            auto outgoing_colors =
+                get_colors_pairs(current_coloring, graph.get_outbound_adjacent(node), graph.get_edge_labels(), graph.get_outbound_edges(node));
 
-            // Sort the vectors using lexical sorting to ensure that the actual order of retrieval is irrelevant.
+            auto ingoing_colors =
+                graph.is_directed() ?
+                    get_colors_pairs(current_coloring, graph.get_inbound_adjacent(node), graph.get_edge_labels(), graph.get_inbound_edges(node)) :
+                    std::vector<AdjacentColor>();
 
-            lexical_sort(outgoing_node_colors, outgoing_edge_colors);
-            lexical_sort(ingoing_node_colors, ingoing_edge_colors);
-
-            next_coloring[node] = get_color({ current_coloring[node],
-                                              std::move(outgoing_edge_colors),
-                                              std::move(outgoing_node_colors),
-                                              std::move(ingoing_edge_colors),
-                                              std::move(ingoing_node_colors) });
+            next_coloring[node] = get_new_color({ current_coloring[node], std::move(outgoing_colors), std::move(ingoing_colors) });
         }
 
         if (test_fixpoint(current_coloring, next_coloring))
@@ -174,24 +207,41 @@ int WeisfeilerLeman::get_subgraph_color(int src_node, int dst_node, const Graph&
     auto src_label = node_labels[src_node];
     auto dst_label = node_labels[dst_node];
 
-    auto forward_edge_labels = get_colors_from_indices(edge_labels, graph.get_edges(src_node, dst_node));
-    auto self_src_edge_labels = get_colors_from_indices(edge_labels, graph.get_edges(src_node, src_node));
-    auto backward_edge_labels = graph.is_directed() ? get_colors_from_indices(edge_labels, graph.get_edges(dst_node, src_node)) : std::vector<int>();
-    auto self_dst_edge_labels = graph.is_directed() ? get_colors_from_indices(edge_labels, graph.get_edges(dst_node, dst_node)) : std::vector<int>();
+    auto forward_edge_labels = get_colors(edge_labels, graph.get_edges(src_node, dst_node));
+    auto self_src_edge_labels = get_colors(edge_labels, graph.get_edges(src_node, src_node));
+    auto backward_edge_labels = get_colors(edge_labels, graph.get_edges(dst_node, src_node));
+    auto self_dst_edge_labels = get_colors(edge_labels, graph.get_edges(dst_node, dst_node));
 
-    std::sort(forward_edge_labels.begin(), forward_edge_labels.end());
-    std::sort(self_src_edge_labels.begin(), self_src_edge_labels.end());
-    std::sort(backward_edge_labels.begin(), backward_edge_labels.end());
-    std::sort(self_dst_edge_labels.begin(), self_dst_edge_labels.end());
+    // Encode the subgraph as a vector of the colors of the nodes and the edges.
+    // We use a pairing function to give them a unique color to distinguish between self-loops and normal edges.
+
+    auto forward_colors = std::vector<AdjacentColor>();
+    auto backward_colors = std::vector<AdjacentColor>();
+
+    for (const auto& label : forward_edge_labels)
+    {
+        forward_colors.emplace_back(pairing_function(0, label), dst_label);
+    }
+
+    for (const auto& label : self_src_edge_labels)
+    {
+        forward_colors.emplace_back(pairing_function(1, label), src_label);
+    }
+
+    for (const auto& label : backward_edge_labels)
+    {
+        backward_colors.emplace_back(pairing_function(0, label), src_label);
+    }
+
+    for (const auto& label : self_dst_edge_labels)
+    {
+        backward_colors.emplace_back(pairing_function(1, label), dst_label);
+    }
 
     // Graph labels must be non-negative and colors will always be positive.
     // We make the graph labels negative so that they are not confused with colors.
 
-    return get_color({ -pairing_function(src_label, dst_label) - 1,
-                       std::move(forward_edge_labels),
-                       std::move(self_src_edge_labels),
-                       std::move(backward_edge_labels),
-                       std::move(self_dst_edge_labels) });
+    return get_new_color({ -pairing_function(src_label, dst_label) - 1, std::move(forward_colors), std::move(backward_colors) });
 }
 
 std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(const Graph& graph)
@@ -219,7 +269,7 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(cons
         {
             for (int j = 0; j < num_nodes; ++j)
             {
-                auto compositions = std::vector<int>(num_nodes);
+                auto compositions = std::vector<AdjacentColor>(num_nodes);
 
                 const auto ij_index = index_of_pair(i, j, num_nodes);
                 const auto ij_color = current_coloring[ij_index];
@@ -232,11 +282,10 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(cons
                     const auto ik_color = current_coloring[ik_index];
                     const auto kj_color = current_coloring[kj_index];
 
-                    compositions[k] = pairing_function(ik_color, kj_color);
+                    compositions[k] = { ik_color, kj_color };
                 }
 
-                std::sort(compositions.begin(), compositions.end());
-                next_coloring[ij_index] = get_color({ ij_color, std::move(compositions), {}, {}, {} });
+                next_coloring[ij_index] = get_new_color({ ij_color, std::move(compositions), {} });
             }
         }
 

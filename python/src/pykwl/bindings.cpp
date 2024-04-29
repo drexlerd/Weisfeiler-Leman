@@ -21,5 +21,8 @@ void init_kwl(py::module_& m)
 
     py::class_<WeisfeilerLeman>(m, "WeisfeilerLeman")  //
         .def(py::init<int>())
+        .def(py::init<int, bool>())
+        .def("get_k", &WeisfeilerLeman::get_k)
+        .def("get_ignore_counting", &WeisfeilerLeman::get_ignore_counting)
         .def("compute_coloring", &WeisfeilerLeman::compute_coloring);
 }
