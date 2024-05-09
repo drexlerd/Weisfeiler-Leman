@@ -46,6 +46,8 @@ public:
     bool get_ignore_counting() const;
 
     std::tuple<int, std::vector<int>, std::vector<int>> compute_coloring(const Graph& graph);
+
+    size_t get_coloring_function_size() const;
 };
 
 }

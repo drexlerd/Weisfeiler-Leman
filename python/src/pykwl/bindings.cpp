@@ -24,5 +24,6 @@ void init_kwl(py::module_& m)
         .def(py::init<int, bool>())
         .def("get_k", &WeisfeilerLeman::get_k)
         .def("get_ignore_counting", &WeisfeilerLeman::get_ignore_counting)
-        .def("compute_coloring", &WeisfeilerLeman::compute_coloring);
+        .def("compute_coloring", &WeisfeilerLeman::compute_coloring)
+        .def("get_coloring_function_size", &WeisfeilerLeman::get_coloring_function_size);
 }

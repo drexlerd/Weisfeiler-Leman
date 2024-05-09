@@ -9,15 +9,39 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <limits>
+#include <climits>
 
 namespace wl
 {
 
-inline static int pairing_function(int x, int y)
-{
-    // Szudzik's pairing function
-    return std::abs(x >= y ? x * x + x + y : y * y + x);
+inline static int safe_multiply(int x, int y) {
+    if (x != 0 && (y > INT_MAX / x || y < INT_MIN / x)) {
+        throw std::overflow_error("Overflow detected in multiplication");
+    }
+    return x * y;
 }
+
+inline static int pairing_function(int x, int y) {
+    int x_sq, y_sq;
+    if (x >= y) {
+        x_sq = safe_multiply(x, x);  // Safe multiplication
+        int x_sq_plus_x = x_sq + x;  // Add x
+        if (x_sq_plus_x < x_sq) throw std::overflow_error("Overflow in addition");
+        return x_sq_plus_x + y;  // Add y
+    } else {
+        y_sq = safe_multiply(y, y);  // Safe multiplication
+        if (y_sq < y) throw std::overflow_error("Overflow in addition");
+        return y_sq + x;  // Add x
+    }
+}
+
+
+//inline static int pairing_function(int x, int y)
+//{
+//    // Szudzik's pairing function
+//    return std::abs(x >= y ? x * x + x + y : y * y + x);
+//}
 
 inline static void lexical_sort(std::vector<int>& items1, std::vector<int>& items2)
 {
@@ -318,5 +342,7 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::compute_col
 
     throw std::invalid_argument("k must be either 1 or 2");
 }
+
+size_t WeisfeilerLeman::get_coloring_function_size() const { return m_color_function.size(); }
 
 }
