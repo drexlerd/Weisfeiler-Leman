@@ -33,9 +33,9 @@ private:
 
     Color get_subgraph_color(int src_node, int dst_node, const Graph& graph);
 
-    std::tuple<int, std::vector<int>, std::vector<int>> k1_fwl(const Graph& graph, size_t max_num_iterations);
+    std::tuple<bool, size_t, std::vector<int>, std::vector<int>> k1_fwl(const Graph& graph, size_t max_num_iterations);
 
-    std::tuple<int, std::vector<int>, std::vector<int>> k2_fwl(const Graph& graph, size_t max_num_iterations);
+    std::tuple<bool, size_t, std::vector<int>, std::vector<int>> k2_fwl(const Graph& graph, size_t max_num_iterations);
 
 public:
     explicit WeisfeilerLeman(int k);
@@ -46,7 +46,7 @@ public:
 
     bool get_ignore_counting() const;
 
-    std::tuple<int, std::vector<int>, std::vector<int>> compute_coloring(const Graph& graph, size_t max_num_iterations = std::numeric_limits<size_t>::max());
+    std::tuple<bool, size_t, std::vector<int>, std::vector<int>> compute_coloring(const Graph& graph, size_t max_num_iterations = std::numeric_limits<size_t>::max());
 
     size_t get_coloring_function_size() const;
 };

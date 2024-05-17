@@ -172,7 +172,7 @@ Color WeisfeilerLeman::get_new_color(NodeColorContext&& node_color_context)
     return it->second;
 }
 
-std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(const Graph& graph, size_t max_num_iterations)
+std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(const Graph& graph, size_t max_num_iterations)
 {
     auto num_nodes = graph.get_num_nodes();
     auto current_coloring = std::vector<int>(num_nodes);
@@ -187,7 +187,8 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(cons
         current_coloring[node] = get_new_color({ node_label, {}, {} });
     }
 
-    int num_iterations = 0;
+    size_t num_iterations = 0;
+    bool is_stable = false;
 
     while (true)
     {
@@ -208,6 +209,7 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(cons
 
         if (test_fixpoint(current_coloring, next_coloring))
         {
+            is_stable = true;
             break;
         }
         else
@@ -222,7 +224,7 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(cons
 
     auto [unique, counts] = get_frequencies(current_coloring);
     lexical_sort(unique, counts);
-    return { num_iterations, std::move(unique), std::move(counts) };
+    return { is_stable, num_iterations, std::move(unique), std::move(counts) };
 }
 
 inline static int index_of_pair(int first_node, int second_node, int num_nodes) { return first_node * num_nodes + second_node; }
@@ -272,7 +274,7 @@ int WeisfeilerLeman::get_subgraph_color(int src_node, int dst_node, const Graph&
     return get_new_color({ -pairing_function(src_label, dst_label) - 1, std::move(forward_colors), std::move(backward_colors) });
 }
 
-std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(const Graph& graph, size_t max_num_iterations)
+std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(const Graph& graph, size_t max_num_iterations)
 {
     const auto num_nodes = graph.get_num_nodes();
     auto current_coloring = std::vector<int>(num_nodes * num_nodes);
@@ -287,7 +289,8 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(cons
         }
     }
 
-    int num_iterations = 0;
+    size_t num_iterations = 0;
+    bool is_stable = false;
 
     while (true)
     {
@@ -319,6 +322,7 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(cons
 
         if (test_fixpoint(current_coloring, next_coloring))
         {
+            is_stable = true;
             break;
         }
         else
@@ -333,10 +337,10 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(cons
 
     auto [unique, counts] = get_frequencies(current_coloring);
     lexical_sort(unique, counts);
-    return { num_iterations, std::move(unique), std::move(counts) };
+    return { is_stable, num_iterations, std::move(unique), std::move(counts) };
 }
 
-std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::compute_coloring(const Graph& graph, size_t max_num_iterations)
+std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::compute_coloring(const Graph& graph, size_t max_num_iterations)
 {
     if (m_k == 1)
     {
