@@ -172,7 +172,7 @@ Color WeisfeilerLeman::get_new_color(NodeColorContext&& node_color_context)
     return it->second;
 }
 
-std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(const Graph& graph)
+std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(const Graph& graph, size_t max_num_iterations)
 {
     auto num_nodes = graph.get_num_nodes();
     auto current_coloring = std::vector<int>(num_nodes);
@@ -213,6 +213,10 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(cons
         else
         {
             std::swap(current_coloring, next_coloring);
+        }
+
+        if (num_iterations == max_num_iterations) {
+            break;
         }
     }
 
@@ -268,7 +272,7 @@ int WeisfeilerLeman::get_subgraph_color(int src_node, int dst_node, const Graph&
     return get_new_color({ -pairing_function(src_label, dst_label) - 1, std::move(forward_colors), std::move(backward_colors) });
 }
 
-std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(const Graph& graph)
+std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(const Graph& graph, size_t max_num_iterations)
 {
     const auto num_nodes = graph.get_num_nodes();
     auto current_coloring = std::vector<int>(num_nodes * num_nodes);
@@ -321,6 +325,10 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(cons
         {
             std::swap(current_coloring, next_coloring);
         }
+
+        if (num_iterations == max_num_iterations) {
+            break;
+        }
     }
 
     auto [unique, counts] = get_frequencies(current_coloring);
@@ -328,16 +336,16 @@ std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(cons
     return { num_iterations, std::move(unique), std::move(counts) };
 }
 
-std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::compute_coloring(const Graph& graph)
+std::tuple<int, std::vector<int>, std::vector<int>> WeisfeilerLeman::compute_coloring(const Graph& graph, size_t max_num_iterations)
 {
     if (m_k == 1)
     {
-        return k1_fwl(graph);
+        return k1_fwl(graph, max_num_iterations);
     }
 
     if (m_k == 2)
     {
-        return k2_fwl(graph);
+        return k2_fwl(graph, max_num_iterations);
     }
 
     throw std::invalid_argument("k must be either 1 or 2");
