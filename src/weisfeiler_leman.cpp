@@ -2,46 +2,53 @@
 
 #include <algorithm>
 #include <cassert>
+#include <climits>
 #include <cstddef>
 #include <cstdlib>
+#include <limits>
 #include <stdexcept>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <limits>
-#include <climits>
 
 namespace wl
 {
 
-inline static int safe_multiply(int x, int y) {
-    if (x != 0 && (y > INT_MAX / x || y < INT_MIN / x)) {
+inline static int safe_multiply(int x, int y)
+{
+    if (x != 0 && (y > INT_MAX / x || y < INT_MIN / x))
+    {
         throw std::overflow_error("Overflow detected in multiplication");
     }
     return x * y;
 }
 
-inline static int pairing_function(int x, int y) {
+inline static int pairing_function(int x, int y)
+{
     int x_sq, y_sq;
-    if (x >= y) {
+    if (x >= y)
+    {
         x_sq = safe_multiply(x, x);  // Safe multiplication
         int x_sq_plus_x = x_sq + x;  // Add x
-        if (x_sq_plus_x < x_sq) throw std::overflow_error("Overflow in addition");
+        if (x_sq_plus_x < x_sq)
+            throw std::overflow_error("Overflow in addition");
         return x_sq_plus_x + y;  // Add y
-    } else {
+    }
+    else
+    {
         y_sq = safe_multiply(y, y);  // Safe multiplication
-        if (y_sq < y) throw std::overflow_error("Overflow in addition");
+        if (y_sq < y)
+            throw std::overflow_error("Overflow in addition");
         return y_sq + x;  // Add x
     }
 }
 
-
-//inline static int pairing_function(int x, int y)
+// inline static int pairing_function(int x, int y)
 //{
-//    // Szudzik's pairing function
-//    return std::abs(x >= y ? x * x + x + y : y * y + x);
-//}
+//     // Szudzik's pairing function
+//     return std::abs(x >= y ? x * x + x + y : y * y + x);
+// }
 
 inline static void lexical_sort(std::vector<int>& items1, std::vector<int>& items2)
 {
@@ -83,14 +90,14 @@ inline static std::pair<std::vector<int>, std::vector<int>> get_frequencies(cons
     return { unique, counts };
 }
 
-inline static bool test_fixpoint(const std::vector<int>& current_coloring, const std::vector<int>& next_coloring)
+inline static bool test_fixpoint(const GraphColoring& current_coloring, const GraphColoring& next_coloring)
 {
     bool fixpoint = true;
 
-    auto coloring_difference = next_coloring[0] - current_coloring[0];
-    for (size_t i = 0; i < next_coloring.size(); ++i)
+    auto coloring_difference = next_coloring.colorings[0] - current_coloring.colorings[0];
+    for (size_t i = 0; i < next_coloring.colorings.size(); ++i)
     {
-        if ((current_coloring[i] + coloring_difference) != next_coloring[i])
+        if ((current_coloring.colorings[i] + coloring_difference) != next_coloring.colorings[i])
         {
             fixpoint = false;
             break;
@@ -172,20 +179,35 @@ Color WeisfeilerLeman::get_new_color(NodeColorContext&& node_color_context)
     return it->second;
 }
 
+bool WeisfeilerLeman::k1_fwl_next_iteration(const Graph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring)
+{
+    for (int node = 0; node < graph.get_num_nodes(); ++node)
+    {
+        auto outgoing_colors =
+            get_colors_pairs(current_coloring.colorings, graph.get_outbound_adjacent(node), graph.get_edge_labels(), graph.get_outbound_edges(node));
+
+        auto ingoing_colors =
+            graph.is_directed() ?
+                get_colors_pairs(current_coloring.colorings, graph.get_inbound_adjacent(node), graph.get_edge_labels(), graph.get_inbound_edges(node)) :
+                std::vector<AdjacentColor>();
+
+        ref_next_coloring.colorings[node] = get_new_color({ current_coloring.colorings[node], std::move(outgoing_colors), std::move(ingoing_colors) });
+    }
+
+    if (test_fixpoint(current_coloring, ref_next_coloring))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1_fwl(const Graph& graph, size_t max_num_iterations)
 {
     auto num_nodes = graph.get_num_nodes();
-    auto current_coloring = std::vector<int>(num_nodes);
-    auto next_coloring = std::vector<int>(num_nodes);
 
-    for (int node = 0; node < num_nodes; ++node)
-    {
-        // Graph labels must be non-negative and colors will always be positive.
-        // We make the graph labels negative so that they are not confused with colors.
-
-        auto node_label = -graph.get_node_label(node) - 1;
-        current_coloring[node] = get_new_color({ node_label, {}, {} });
-    }
+    auto current_coloring = compute_initial_coloring(graph);
+    auto next_coloring = GraphColoring { std::vector<int>(num_nodes) };
 
     size_t num_iterations = 0;
     bool is_stable = false;
@@ -194,35 +216,23 @@ std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::k1
     {
         ++num_iterations;
 
-        for (int node = 0; node < num_nodes; ++node)
-        {
-            auto outgoing_colors =
-                get_colors_pairs(current_coloring, graph.get_outbound_adjacent(node), graph.get_edge_labels(), graph.get_outbound_edges(node));
+        bool is_stable_i = k1_fwl_next_iteration(graph, current_coloring, next_coloring);
 
-            auto ingoing_colors =
-                graph.is_directed() ?
-                    get_colors_pairs(current_coloring, graph.get_inbound_adjacent(node), graph.get_edge_labels(), graph.get_inbound_edges(node)) :
-                    std::vector<AdjacentColor>();
+        std::swap(current_coloring, next_coloring);
 
-            next_coloring[node] = get_new_color({ current_coloring[node], std::move(outgoing_colors), std::move(ingoing_colors) });
-        }
-
-        if (test_fixpoint(current_coloring, next_coloring))
+        if (is_stable_i)
         {
             is_stable = true;
             break;
         }
-        else
-        {
-            std::swap(current_coloring, next_coloring);
-        }
 
-        if (num_iterations == max_num_iterations) {
+        if (num_iterations == max_num_iterations)
+        {
             break;
         }
     }
 
-    auto [unique, counts] = get_frequencies(current_coloring);
+    auto [unique, counts] = current_coloring.get_frequencies();
     lexical_sort(unique, counts);
     return { is_stable, num_iterations, std::move(unique), std::move(counts) };
 }
@@ -274,20 +284,47 @@ int WeisfeilerLeman::get_subgraph_color(int src_node, int dst_node, const Graph&
     return get_new_color({ -pairing_function(src_label, dst_label) - 1, std::move(forward_colors), std::move(backward_colors) });
 }
 
+bool WeisfeilerLeman::k2_fwl_next_iteration(const Graph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring)
+{
+    const auto num_nodes = graph.get_num_nodes();
+
+    for (int i = 0; i < num_nodes; ++i)
+    {
+        for (int j = 0; j < num_nodes; ++j)
+        {
+            auto compositions = std::vector<AdjacentColor>(num_nodes);
+
+            const auto ij_index = index_of_pair(i, j, num_nodes);
+            const auto ij_color = current_coloring.colorings[ij_index];
+
+            for (int k = 0; k < num_nodes; ++k)
+            {
+                const auto ik_index = index_of_pair(i, k, num_nodes);
+                const auto kj_index = index_of_pair(k, j, num_nodes);
+
+                const auto ik_color = current_coloring.colorings[ik_index];
+                const auto kj_color = current_coloring.colorings[kj_index];
+
+                compositions[k] = { ik_color, kj_color };
+            }
+
+            ref_next_coloring.colorings[ij_index] = get_new_color({ ij_color, std::move(compositions), {} });
+        }
+    }
+
+    if (test_fixpoint(current_coloring, ref_next_coloring))
+    {
+        return true;
+    }
+    return false;
+}
+
 std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2_fwl(const Graph& graph, size_t max_num_iterations)
 {
     const auto num_nodes = graph.get_num_nodes();
-    auto current_coloring = std::vector<int>(num_nodes * num_nodes);
-    auto next_coloring = std::vector<int>(num_nodes * num_nodes);
 
-    for (int first_node = 0; first_node < num_nodes; ++first_node)
-    {
-        for (int second_node = 0; second_node < num_nodes; ++second_node)
-        {
-            const auto pair_index = index_of_pair(first_node, second_node, num_nodes);
-            current_coloring[pair_index] = get_subgraph_color(first_node, second_node, graph);
-        }
-    }
+    auto current_coloring = compute_initial_coloring(graph);
+    auto next_coloring = GraphColoring { std::vector<int>(num_nodes * num_nodes) };
 
     size_t num_iterations = 0;
     bool is_stable = false;
@@ -296,46 +333,23 @@ std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::k2
     {
         ++num_iterations;
 
-        for (int i = 0; i < num_nodes; ++i)
-        {
-            for (int j = 0; j < num_nodes; ++j)
-            {
-                auto compositions = std::vector<AdjacentColor>(num_nodes);
+        bool is_stable_i = k2_fwl_next_iteration(graph, current_coloring, next_coloring);
 
-                const auto ij_index = index_of_pair(i, j, num_nodes);
-                const auto ij_color = current_coloring[ij_index];
+        std::swap(current_coloring, next_coloring);
 
-                for (int k = 0; k < num_nodes; ++k)
-                {
-                    const auto ik_index = index_of_pair(i, k, num_nodes);
-                    const auto kj_index = index_of_pair(k, j, num_nodes);
-
-                    const auto ik_color = current_coloring[ik_index];
-                    const auto kj_color = current_coloring[kj_index];
-
-                    compositions[k] = { ik_color, kj_color };
-                }
-
-                next_coloring[ij_index] = get_new_color({ ij_color, std::move(compositions), {} });
-            }
-        }
-
-        if (test_fixpoint(current_coloring, next_coloring))
+        if (is_stable_i)
         {
             is_stable = true;
             break;
         }
-        else
-        {
-            std::swap(current_coloring, next_coloring);
-        }
 
-        if (num_iterations == max_num_iterations) {
+        if (num_iterations == max_num_iterations)
+        {
             break;
         }
     }
 
-    auto [unique, counts] = get_frequencies(current_coloring);
+    auto [unique, counts] = get_frequencies(current_coloring.colorings);
     lexical_sort(unique, counts);
     return { is_stable, num_iterations, std::move(unique), std::move(counts) };
 }
@@ -350,6 +364,58 @@ std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::co
     if (m_k == 2)
     {
         return k2_fwl(graph, max_num_iterations);
+    }
+
+    throw std::invalid_argument("k must be either 1 or 2");
+}
+
+GraphColoring WeisfeilerLeman::compute_initial_coloring(const Graph& graph)
+{
+    if (m_k == 1)
+    {
+        auto num_nodes = graph.get_num_nodes();
+        auto current_coloring = std::vector<int>(num_nodes);
+
+        for (int node = 0; node < num_nodes; ++node)
+        {
+            // Graph labels must be non-negative and colors will always be positive.
+            // We make the graph labels negative so that they are not confused with colors.
+
+            auto node_label = -graph.get_node_label(node) - 1;
+            current_coloring[node] = get_new_color({ node_label, {}, {} });
+        }
+
+        return GraphColoring { std::move(current_coloring) };
+    }
+    if (m_k == 2)
+    {
+        const auto num_nodes = graph.get_num_nodes();
+        auto current_coloring = std::vector<int>(num_nodes * num_nodes);
+
+        for (int first_node = 0; first_node < num_nodes; ++first_node)
+        {
+            for (int second_node = 0; second_node < num_nodes; ++second_node)
+            {
+                const auto pair_index = index_of_pair(first_node, second_node, num_nodes);
+                current_coloring[pair_index] = get_subgraph_color(first_node, second_node, graph);
+            }
+        }
+
+        return GraphColoring { std::move(current_coloring) };
+    }
+
+    throw std::invalid_argument("k must be either 1 or 2");
+}
+
+bool WeisfeilerLeman::compute_next_coloring(const Graph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring)
+{
+    if (m_k == 1)
+    {
+        return k1_fwl_next_iteration(graph, current_coloring, ref_next_coloring);
+    }
+    if (m_k == 2)
+    {
+        return k2_fwl_next_iteration(graph, current_coloring, ref_next_coloring);
     }
 
     throw std::invalid_argument("k must be either 1 or 2");

@@ -19,11 +19,16 @@ void init_kwl(py::module_& m)
         .def("add_node", &Graph::add_node, py::arg("label") = 0)
         .def("add_edge", &Graph::add_edge, py::arg("src_node"), py::arg("dst_node"), py::arg("label") = 0);
 
+    py::class_<GraphColoring>(m, "GraphColoring")  //
+        .def("get_frequencies", &GraphColoring::get_frequencies);
+
     py::class_<WeisfeilerLeman>(m, "WeisfeilerLeman")  //
         .def(py::init<int>())
         .def(py::init<int, bool>())
         .def("get_k", &WeisfeilerLeman::get_k)
         .def("get_ignore_counting", &WeisfeilerLeman::get_ignore_counting)
         .def("compute_coloring", &WeisfeilerLeman::compute_coloring, py::arg("graph"), py::arg("max_num_iterations") = std::numeric_limits<size_t>::max())
+        .def("compute_initial_coloring", &WeisfeilerLeman::compute_initial_coloring)
+        .def("compute_next_coloring", &WeisfeilerLeman::compute_next_coloring)
         .def("get_coloring_function_size", &WeisfeilerLeman::get_coloring_function_size);
 }
