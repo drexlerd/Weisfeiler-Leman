@@ -56,26 +56,9 @@ struct GraphColoring
 {
     std::vector<int> colorings;
 
-    std::pair<std::vector<int>, std::vector<int>> get_frequencies()
-    {
-        std::unordered_map<int, int> frequencies;
+    std::pair<std::vector<int>, std::vector<int>> get_frequencies() const;
 
-        for (int item : colorings)
-        {
-            frequencies[item]++;
-        }
-
-        std::vector<int> unique;
-        std::vector<int> counts;
-
-        for (const auto& [item, count] : frequencies)
-        {
-            unique.push_back(item);
-            counts.push_back(count);
-        }
-
-        return { unique, counts };
-    }
+    bool is_identical_to(const GraphColoring& other) const;
 };
 
 }

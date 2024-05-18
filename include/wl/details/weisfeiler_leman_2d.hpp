@@ -1,11 +1,10 @@
-#ifndef WL_DETAILS_WEISFEILER_LEMAN_HPP_
-#define WL_DETAILS_WEISFEILER_LEMAN_HPP_
+#ifndef WL_DETAILS_WEISFEILER_LEMAN_2D_HPP_
+#define WL_DETAILS_WEISFEILER_LEMAN_2D_HPP_
 
 #include "wl/details/graph.hpp"
-#include "wl/details/weisfeiler_leman_1d.hpp"
-#include "wl/details/weisfeiler_leman_2d.hpp"
 
 #include <limits>
+#include <map>
 #include <tuple>
 #include <vector>
 
@@ -16,25 +15,28 @@ using Color = int;
 using AdjacentColor = std::pair<Color, Color>;
 using NodeColorContext = std::tuple<Color, std::vector<AdjacentColor>, std::vector<AdjacentColor>>;
 
-class WeisfeilerLeman
+class WeisfeilerLeman2D
 {
 private:
-    int m_k;
-    WeisfeilerLeman1D m_1wl;
-    WeisfeilerLeman2D m_2wl;
+    std::map<NodeColorContext, Color> m_color_function;
+    bool m_ignore_counting;
+
+    std::vector<Color> get_colors(const std::vector<Color>& colors, const std::vector<int>& indices);
+
+    Color get_new_color(NodeColorContext&& color_multiset);
+
+    Color get_subgraph_color(int src_node, int dst_node, const Graph& graph);
 
 public:
-    explicit WeisfeilerLeman(int k);
+    explicit WeisfeilerLeman2D();
 
-    explicit WeisfeilerLeman(int k, bool ignore_counting);
+    explicit WeisfeilerLeman2D(bool ignore_counting);
 
     /* Getters */
 
-    int get_k() const;
+    size_t get_coloring_function_size() const;
 
     bool get_ignore_counting() const;
-
-    size_t get_coloring_function_size() const;
 
     /* Simple interface to run k-WL for at most max_num_iterations or until convergence. */
 
@@ -43,8 +45,12 @@ public:
 
     /* Expert interface with more control over the execution */
 
+    /// @brief Compute the initial coloring of the graph based on the node labels.
+    /// Returns a GraphColoring object.
     GraphColoring compute_initial_coloring(const Graph& graph);
 
+    /// @brief One step of updating the 1-WL coloring.
+    /// Return true iff the coloring has stabilized.
     bool compute_next_coloring(const Graph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring);
 };
 

@@ -6,6 +6,10 @@
 namespace wl
 {
 
+// -----
+// Graph
+// -----
+
 Graph::Graph(bool directed) :
     m_outgoing_edges(),
     m_ingoing_edges(),
@@ -104,4 +108,47 @@ const std::vector<int>& Graph::get_edge_labels() const { return m_edge_labels; }
 const std::vector<int>& Graph::get_edges(int src_node, int dst_node) const { return m_outgoing_edges_between.at(src_node).at(dst_node); }
 
 bool Graph::is_directed() const { return m_directed; }
+
+// -------------
+// GraphColoring
+// -------------
+
+std::pair<std::vector<int>, std::vector<int>> GraphColoring::get_frequencies() const
+{
+    std::unordered_map<int, int> frequencies;
+
+    for (int item : colorings)
+    {
+        frequencies[item]++;
+    }
+
+    std::vector<int> unique;
+    std::vector<int> counts;
+
+    for (const auto& [item, count] : frequencies)
+    {
+        unique.push_back(item);
+        counts.push_back(count);
+    }
+
+    return { unique, counts };
+}
+
+bool GraphColoring::is_identical_to(const GraphColoring& other) const
+{
+    bool fixpoint = true;
+    auto coloring_difference = other.colorings[0] - colorings[0];
+
+    for (size_t i = 0; i < other.colorings.size(); ++i)
+    {
+        if ((colorings[i] + coloring_difference) != other.colorings[i])
+        {
+            fixpoint = false;
+            break;
+        }
+    }
+
+    return fixpoint;
+}
+
 }
