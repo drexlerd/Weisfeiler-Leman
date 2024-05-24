@@ -1,6 +1,7 @@
 #ifndef WL_DETAILS_UTILS_HPP_
 #define WL_DETAILS_UTILS_HPP_
 
+#include <algorithm>
 #include <cassert>
 #include <climits>
 #include <stdexcept>

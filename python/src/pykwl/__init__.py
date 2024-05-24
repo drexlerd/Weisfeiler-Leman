@@ -1,1 +1,1 @@
-from _pykwl import Graph, WeisfeilerLeman
+from _pykwl import Graph, GraphColoring, WeisfeilerLeman
