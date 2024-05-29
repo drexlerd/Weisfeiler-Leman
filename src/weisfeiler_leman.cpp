@@ -9,6 +9,10 @@
 namespace wl
 {
 
+/*
+ * TODO: Refactor the interface to use runtime polymorphism instead. This class is currently unnecessary.
+ */
+
 WeisfeilerLeman::WeisfeilerLeman(int k) : WeisfeilerLeman(k, false) {}
 
 WeisfeilerLeman::WeisfeilerLeman(int k, bool ignore_counting) : m_k(k), m_1wl(ignore_counting), m_2wl(ignore_counting)
