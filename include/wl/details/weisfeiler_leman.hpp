@@ -1,7 +1,7 @@
 #ifndef WL_DETAILS_WEISFEILER_LEMAN_HPP_
 #define WL_DETAILS_WEISFEILER_LEMAN_HPP_
 
-#include "wl/details/graph.hpp"
+#include "wl/details/edge_colored_graph.hpp"
 #include "wl/details/weisfeiler_leman_1d.hpp"
 #include "wl/details/weisfeiler_leman_2d.hpp"
 
@@ -38,14 +38,14 @@ public:
 
     /* Simple interface to run k-WL for at most max_num_iterations or until convergence. */
 
-    std::tuple<bool, size_t, std::vector<int>, std::vector<int>> compute_coloring(const Graph& graph,
+    std::tuple<bool, size_t, std::vector<int>, std::vector<int>> compute_coloring(const EdgeColoredGraph& graph,
                                                                                   size_t max_num_iterations = std::numeric_limits<size_t>::max());
 
     /* Expert interface with more control over the execution */
 
-    GraphColoring compute_initial_coloring(const Graph& graph);
+    GraphColoring compute_initial_coloring(const EdgeColoredGraph& graph);
 
-    bool compute_next_coloring(const Graph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring);
+    bool compute_next_coloring(const EdgeColoredGraph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring);
 };
 
 }

@@ -1,5 +1,6 @@
-#include "wl/details/graph.hpp"
+#include "wl/details/edge_colored_graph.hpp"
 
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 
@@ -7,10 +8,10 @@ namespace wl
 {
 
 // -----
-// Graph
+// EdgeColoredGraph
 // -----
 
-Graph::Graph(bool directed) :
+EdgeColoredGraph::EdgeColoredGraph(bool directed) :
     m_outgoing_edges(),
     m_ingoing_edges(),
     m_outgoing_adjacent(),
@@ -23,7 +24,7 @@ Graph::Graph(bool directed) :
 {
 }
 
-int Graph::add_node(int label)
+int EdgeColoredGraph::add_node(int label)
 {
     if (label < 0)
     {
@@ -54,7 +55,7 @@ int Graph::add_node(int label)
     return node;
 }
 
-void Graph::add_edge(int src_node, int dst_node, int label)
+void EdgeColoredGraph::add_edge(int src_node, int dst_node, int label)
 {
     if (label < 0)
     {
@@ -85,29 +86,36 @@ void Graph::add_edge(int src_node, int dst_node, int label)
     }
 }
 
-const std::vector<int>& Graph::get_outbound_edges(int node) const { return m_outgoing_edges.at(node); }
+const std::vector<int>& EdgeColoredGraph::get_outbound_edges(int node) const { return m_outgoing_edges.at(node); }
 
-const std::vector<int>& Graph::get_inbound_edges(int node) const { return m_ingoing_edges.at(node); }
+const std::vector<int>& EdgeColoredGraph::get_inbound_edges(int node) const { return m_ingoing_edges.at(node); }
 
-const std::vector<int>& Graph::get_outbound_adjacent(int node) const { return m_outgoing_adjacent.at(node); }
+const std::vector<int>& EdgeColoredGraph::get_outbound_adjacent(int node) const { return m_outgoing_adjacent.at(node); }
 
-const std::vector<int>& Graph::get_inbound_adjacent(int node) const { return m_ingoing_adjacent.at(node); }
+const std::vector<int>& EdgeColoredGraph::get_inbound_adjacent(int node) const { return m_ingoing_adjacent.at(node); }
 
-int Graph::get_num_nodes() const { return static_cast<int>(m_node_labels.size()); }
+int EdgeColoredGraph::get_num_nodes() const { return static_cast<int>(m_node_labels.size()); }
 
-int Graph::get_num_edges() const { return static_cast<int>(m_edge_labels.size()); }
+int EdgeColoredGraph::get_num_edges() const { return static_cast<int>(m_edge_labels.size()); }
 
-int Graph::get_node_label(int node) const { return m_node_labels.at(node); }
+int EdgeColoredGraph::get_node_label(int node) const { return m_node_labels.at(node); }
 
-int Graph::get_edge_label(int edge) const { return m_edge_labels.at(edge); }
+int EdgeColoredGraph::get_edge_label(int edge) const { return m_edge_labels.at(edge); }
 
-const std::vector<int>& Graph::get_node_labels() const { return m_node_labels; }
+const std::vector<int>& EdgeColoredGraph::get_node_labels() const { return m_node_labels; }
 
-const std::vector<int>& Graph::get_edge_labels() const { return m_edge_labels; }
+const std::vector<int>& EdgeColoredGraph::get_edge_labels() const { return m_edge_labels; }
 
-const std::vector<int>& Graph::get_edges(int src_node, int dst_node) const { return m_outgoing_edges_between.at(src_node).at(dst_node); }
+const std::vector<int>& EdgeColoredGraph::get_edges(int src_node, int dst_node) const { return m_outgoing_edges_between.at(src_node).at(dst_node); }
 
-bool Graph::is_directed() const { return m_directed; }
+bool EdgeColoredGraph::is_directed() const { return m_directed; }
+
+std::string EdgeColoredGraph::to_string() const
+{
+    std::stringstream ss;
+    ss << *this;
+    return ss.str();
+}
 
 // -------------
 // GraphColoring

@@ -55,7 +55,7 @@ size_t WeisfeilerLeman::get_coloring_function_size() const
     throw std::runtime_error("internal error");
 }
 
-std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::compute_coloring(const Graph& graph, size_t max_num_iterations)
+std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::compute_coloring(const EdgeColoredGraph& graph, size_t max_num_iterations)
 {
     if (get_k() == 1)
     {
@@ -70,7 +70,7 @@ std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman::co
     throw std::runtime_error("internal error");
 }
 
-GraphColoring WeisfeilerLeman::compute_initial_coloring(const Graph& graph)
+GraphColoring WeisfeilerLeman::compute_initial_coloring(const EdgeColoredGraph& graph)
 {
     if (get_k() == 1)
     {
@@ -85,7 +85,7 @@ GraphColoring WeisfeilerLeman::compute_initial_coloring(const Graph& graph)
     throw std::runtime_error("internal error");
 }
 
-bool WeisfeilerLeman::compute_next_coloring(const Graph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring)
+bool WeisfeilerLeman::compute_next_coloring(const EdgeColoredGraph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring)
 {
     if (get_k() == 1)
     {

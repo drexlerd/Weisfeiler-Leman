@@ -61,7 +61,7 @@ Color WeisfeilerLeman2D::get_new_color(NodeColorContext&& node_color_context)
     return it->second;
 }
 
-int WeisfeilerLeman2D::get_subgraph_color(int src_node, int dst_node, const Graph& graph)
+int WeisfeilerLeman2D::get_subgraph_color(int src_node, int dst_node, const EdgeColoredGraph& graph)
 {
     const auto& node_labels = graph.get_node_labels();
     const auto& edge_labels = graph.get_edge_labels();
@@ -108,7 +108,7 @@ int WeisfeilerLeman2D::get_subgraph_color(int src_node, int dst_node, const Grap
 
 inline static int index_of_pair(int first_node, int second_node, int num_nodes) { return first_node * num_nodes + second_node; }
 
-bool WeisfeilerLeman2D::compute_next_coloring(const Graph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring)
+bool WeisfeilerLeman2D::compute_next_coloring(const EdgeColoredGraph& graph, const GraphColoring& current_coloring, GraphColoring& ref_next_coloring)
 {
     const auto num_nodes = graph.get_num_nodes();
 
@@ -139,7 +139,7 @@ bool WeisfeilerLeman2D::compute_next_coloring(const Graph& graph, const GraphCol
     return current_coloring.is_identical_to(ref_next_coloring);
 }
 
-std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman2D::compute_coloring(const Graph& graph, size_t max_num_iterations)
+std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman2D::compute_coloring(const EdgeColoredGraph& graph, size_t max_num_iterations)
 {
     const auto num_nodes = graph.get_num_nodes();
 
@@ -174,7 +174,7 @@ std::tuple<bool, size_t, std::vector<int>, std::vector<int>> WeisfeilerLeman2D::
     return { is_stable, num_iterations, std::move(unique), std::move(counts) };
 }
 
-GraphColoring WeisfeilerLeman2D::compute_initial_coloring(const Graph& graph)
+GraphColoring WeisfeilerLeman2D::compute_initial_coloring(const EdgeColoredGraph& graph)
 {
     const auto num_nodes = graph.get_num_nodes();
     auto current_coloring = std::vector<int>(num_nodes * num_nodes);

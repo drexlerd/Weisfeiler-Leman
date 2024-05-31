@@ -14,14 +14,21 @@ namespace py = pybind11;
  */
 void init_kwl(py::module_& m)
 {
-    py::class_<Graph>(m, "Graph")  //
+    py::class_<EdgeColoredGraph>(m, "EdgeColoredGraph")  //
         .def(py::init<bool>())
-        .def("add_node", &Graph::add_node, py::arg("label") = 0)
-        .def("add_edge", &Graph::add_edge, py::arg("src_node"), py::arg("dst_node"), py::arg("label") = 0);
+        .def("__str__", &EdgeColoredGraph::to_string)
+        .def("add_node", &EdgeColoredGraph::add_node, py::arg("label") = 0)
+        .def("add_edge", &EdgeColoredGraph::add_edge, py::arg("src_node"), py::arg("dst_node"), py::arg("label") = 0);
 
     py::class_<GraphColoring>(m, "GraphColoring")  //
         .def("get_frequencies", &GraphColoring::get_frequencies)
         .def("is_identical_to", &GraphColoring::is_identical_to);
+
+    py::class_<CanonicalColorRefinement>(m, "CanonicalColorRefinement")  //
+        .def(py::init<bool>())
+        .def("calculate", &CanonicalColorRefinement::calculate)
+        .def_static("histogram", &CanonicalColorRefinement::histogram)
+        .def("get_coloring_function_size", &CanonicalColorRefinement::get_coloring_function_size);
 
     py::class_<WeisfeilerLeman>(m, "WeisfeilerLeman")  //
         .def(py::init<int>())
