@@ -26,8 +26,10 @@ void init_kwl(py::module_& m)
 
     py::class_<CanonicalColorRefinement>(m, "CanonicalColorRefinement")  //
         .def(py::init<bool>())
-        .def("calculate", &CanonicalColorRefinement::calculate)
+        .def("calculate", &CanonicalColorRefinement::calculate, py::arg("graph"), py::arg("factor_matrix") = false)
         .def_static("histogram", &CanonicalColorRefinement::histogram)
+        .def("get_coloring", &CanonicalColorRefinement::get_coloring)
+        .def("get_factor_matrix", &CanonicalColorRefinement::get_factor_matrix)
         .def("get_coloring_function_size", &CanonicalColorRefinement::get_coloring_function_size);
 
     py::class_<WeisfeilerLeman>(m, "WeisfeilerLeman")  //

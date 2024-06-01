@@ -7,6 +7,8 @@ namespace wl::tests
 
 TEST(WLTests, Canonical)
 {
+    auto color_refinement = CanonicalColorRefinement(0);
+
     // 2024-05-31 14:28:09,314 -  > Cost: 4; State 1: [<Atom 'room(rooma)'>, <Atom 'room(roomb)'>, <Atom 'gripper(left)'>, <Atom 'gripper(right)'>, <Atom
     // 'ball(ball1)'>, <Atom 'free(left)'>, <Atom 'free(right)'>, <Atom 'at(ball1, rooma)'>, <Atom 'at-robby(roomb)'>] 2024-05-31 14:28:09,314 -  > Cost: 0;
     // State 2: [<Atom 'room(rooma)'>, <Atom 'room(roomb)'>, <Atom 'gripper(left)'>, <Atom 'gripper(right)'>, <Atom 'ball(ball1)'>, <Atom 'free(left)'>, <Atom
@@ -24,19 +26,19 @@ TEST(WLTests, Canonical)
     // 2 : [7 10]
     // 3 : [8 11]
     // 4 : [9 12 15]
-    // 5 : [0]
-    // 6 : [1]
-    // 7 : [2]
-    // 8 : [3]
-    // 9 : [4]
-    // 10 : [2]
-    // 11 : [3]
-    // 12 : [4 13]
-    // 13 : [0 12]
-    // 14 : [1]
-    // 15 : [4 16]
-    // 16 : [1 15]
-    auto graph1 = EdgeColoredGraph(true);
+    // 5 : []
+    // 6 : []
+    // 7 : []
+    // 8 : []
+    // 9 : []
+    // 10 : []
+    // 11 : []
+    // 12 : [13]
+    // 13 : []
+    // 14 : []
+    // 15 : [16]
+    // 16 : []
+    auto graph1 = EdgeColoredGraph(false);
     graph1.add_node(1);
     graph1.add_node(1);
     graph1.add_node(1);
@@ -66,25 +68,11 @@ TEST(WLTests, Canonical)
     graph1.add_edge(4, 9);
     graph1.add_edge(4, 12);
     graph1.add_edge(4, 15);
-    graph1.add_edge(5, 0);
-    graph1.add_edge(6, 1);
-    graph1.add_edge(7, 2);
-    graph1.add_edge(8, 3);
-    graph1.add_edge(9, 4);
-    graph1.add_edge(10, 2);
-    graph1.add_edge(11, 3);
-    graph1.add_edge(12, 4);
     graph1.add_edge(12, 13);
-    graph1.add_edge(13, 0);
-    graph1.add_edge(13, 12);
-    graph1.add_edge(14, 1);
-    graph1.add_edge(15, 4);
     graph1.add_edge(15, 16);
-    graph1.add_edge(16, 1);
-    graph1.add_edge(16, 15);
 
-    auto color_refinement = CanonicalColorRefinement(false);
-    auto histogram1 = CanonicalColorRefinement::histogram(color_refinement.calculate(graph1));
+    color_refinement.calculate(graph1, true);
+    auto factor_matrix = color_refinement.get_factor_matrix();
 
     /**
      * State 2
@@ -98,20 +86,20 @@ TEST(WLTests, Canonical)
     // 2 : [7 10]
     // 3 : [8 11]
     // 4 : [9 13 15]
-    // 5 : [0]
-    // 6 : [1]
-    // 7 : [2]
-    // 8 : [3]
-    // 9 : [4]
-    // 10 : [2]
-    // 11 : [3]
-    // 12 : [0]
-    // 13 : [4 14]
-    // 14 : [1 13]
-    // 15 : [4 16]
-    // 16 : [1 15]
+    // 5 : []
+    // 6 : []
+    // 7 : []
+    // 8 : []
+    // 9 : []
+    // 10 : []
+    // 11 : []
+    // 12 : []
+    // 13 : [14]
+    // 14 : []
+    // 15 : [16]
+    // 16 : []
 
-    auto graph2 = EdgeColoredGraph(true);
+    auto graph2 = EdgeColoredGraph(false);
     graph2.add_node(1);
     graph2.add_node(1);
     graph2.add_node(1);
@@ -141,27 +129,14 @@ TEST(WLTests, Canonical)
     graph2.add_edge(4, 9);
     graph2.add_edge(4, 13);
     graph2.add_edge(4, 15);
-    graph2.add_edge(5, 0);
-    graph2.add_edge(6, 1);
-    graph2.add_edge(7, 2);
-    graph2.add_edge(8, 3);
-    graph2.add_edge(9, 4);
-    graph2.add_edge(10, 2);
-    graph2.add_edge(11, 3);
-    graph2.add_edge(12, 0);
-    graph2.add_edge(13, 4);
     graph2.add_edge(13, 14);
-    graph2.add_edge(14, 1);
-    graph2.add_edge(14, 13);
-    graph2.add_edge(15, 4);
     graph2.add_edge(15, 16);
-    graph2.add_edge(16, 1);
-    graph2.add_edge(16, 15);
 
     auto color_refinement2 = CanonicalColorRefinement(false);
-    auto histogram2 = CanonicalColorRefinement::histogram(color_refinement2.calculate(graph2));
+    color_refinement2.calculate(graph2, true);
+    auto factor_matrix_2 = color_refinement2.get_factor_matrix();
 
-    EXPECT_NE(histogram1, histogram2);
+    EXPECT_NE(factor_matrix, factor_matrix_2);
 }
 
 }

@@ -12,8 +12,13 @@
 
 namespace wl
 {
-std::vector<std::set<int>> CanonicalColorRefinement::calculate(const EdgeColoredGraph& graph)
+void CanonicalColorRefinement::calculate(const EdgeColoredGraph& graph, bool factor_matrix)
 {
+    if (!std::all_of(graph.get_edge_labels().begin(), graph.get_edge_labels().end(), [](const auto& edge_label) { return edge_label == 0; }))
+    {
+        throw std::runtime_error("Only vertex colored graphs are supported");
+    }
+
     int n = graph.get_num_nodes();
     const auto& alpha = graph.get_node_labels();
     colour_ = std::vector<int>(n + 1, 0);
@@ -170,7 +175,10 @@ std::vector<std::set<int>> CanonicalColorRefinement::calculate(const EdgeColored
 
     // Simplify and return histogram of canonical equitable partition
     C_.assign(C_.begin() + 1, C_.begin() + 1 + k_);
-    return C_;
+    if (factor_matrix)
+    {
+        calculate_factor_matrix(graph);
+    }
 }
 
 void CanonicalColorRefinement::split_up_color(int s)
@@ -260,4 +268,41 @@ void CanonicalColorRefinement::split_up_color(int s)
         std::cout << "            stack: " << s_refine_ << std::endl;
     }
 }
+
+void CanonicalColorRefinement::calculate_factor_matrix(const EdgeColoredGraph& graph)
+{
+    M_ = std::vector<std::pair<std::pair<int, int>, int>>();
+    for (int i = 0; i < k_; ++i)
+    {
+        int u = *C_.at(i).begin();
+        std::vector<int> frequency(k_, 0);
+        for (auto& v : graph.get_outbound_adjacent(u - 1))
+        {
+            int j = colour_.at(v + 1);
+            frequency.at(j - 1) += 1;
+        }
+        assert(frequency.at(i) == 0);
+        frequency.at(i) = C_.at(i).size();
+        for (size_t j = 0; j < frequency.size(); ++j)
+        {
+            if (frequency.at(j) > 0)
+                M_.push_back(std::make_pair(std::make_pair(i + 1, j + 1), frequency.at(j)));
+        }
+    }
+    valid_M_ = true;
+}
+
+std::vector<int> CanonicalColorRefinement::histogram(const std::vector<std::set<int>>& partition)
+{
+    std::vector<int> hist;
+    for (size_t i = 0; i < partition.size(); ++i)
+        hist.push_back(partition[i].size());
+    return hist;
+}
+
+const std::vector<std::set<int>>& CanonicalColorRefinement::get_coloring() const { return C_; }
+
+const std::vector<std::pair<std::pair<int, int>, int>>& CanonicalColorRefinement::get_factor_matrix() const { return M_; }
+
+int CanonicalColorRefinement::get_coloring_function_size() const { return k_; }
 }

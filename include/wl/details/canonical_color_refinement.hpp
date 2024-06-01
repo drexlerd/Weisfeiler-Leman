@@ -1,3 +1,9 @@
+/**
+ * An implementation of Berkholz, Bonsma, and Grohe's O((m+n)log n) algorithm for computing a canonical coloring.
+ *
+ * Credits to Blai Bonet: https://github.com/bonetblai/canonical-coloring
+ */
+
 #ifndef WL_DETAILS_CANONICAL_COLOR_REFINEMENT_HPP_
 #define WL_DETAILS_CANONICAL_COLOR_REFINEMENT_HPP_
 
@@ -68,8 +74,6 @@ std::ostream& operator<<(std::ostream& os, const Stack<T>& stack)
     return os;
 }
 
-using ColorHistogram = std::vector<int>;
-
 class CanonicalColorRefinement
 {
 protected:
@@ -82,27 +86,34 @@ protected:
     std::vector<int> maxcdeg_;         // Indexed by color. maxcdeg[c] = max { d^+_r(v) : v is of color c }
     std::vector<int> mincdeg_;         // Indexed by color. mincdeg[c] = min { d^+_r(v) : v is of color c }
 
+    bool valid_M_;                                        // Whether the factor matrix was computed
+    std::vector<std::pair<std::pair<int, int>, int>> M_;  // Factor matrix
+
     int k_;
     Stack<int> s_refine_;
     std::vector<bool> in_s_refine_;
 
     void split_up_color(int s);
 
+    void calculate_factor_matrix(const EdgeColoredGraph& graph);
+
 public:
     CanonicalColorRefinement(int debug = 0) : debug_(debug) {}
     ~CanonicalColorRefinement() {}
 
-    std::vector<std::set<int>> calculate(const EdgeColoredGraph& graph);
+    /// @brief Calculate the canonical equitable partition of a vertex colored graph.
+    /// @param graph
+    /// @param factor_matrix
+    void calculate(const EdgeColoredGraph& graph, bool factor_matrix = false);
 
-    static ColorHistogram histogram(const std::vector<std::set<int>>& partition)
-    {
-        ColorHistogram hist;
-        for (size_t i = 0; i < partition.size(); ++i)
-            hist.push_back(partition[i].size());
-        return hist;
-    }
+    static std::vector<int> histogram(const std::vector<std::set<int>>& partition);
 
-    int get_coloring_function_size() const { return k_; }
+    /**
+     * Getters
+     */
+    const std::vector<std::set<int>>& get_coloring() const;
+    const std::vector<std::pair<std::pair<int, int>, int>>& get_factor_matrix() const;
+    int get_coloring_function_size() const;
 };
 
 }
