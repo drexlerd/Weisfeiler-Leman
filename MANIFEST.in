@@ -6,6 +6,7 @@ include README.md
 include setup.py
 include Config.cmake.in
 include dependencies/pybind11/CMakeLists.txt
+include dependencies/googletest/CMakeLists.txt
 include dependencies/CMakeLists.txt
 recursive-include cmake/ *
 recursive-include include/ *
