@@ -72,7 +72,7 @@ TEST(WLTests, Canonical)
     graph1.add_edge(15, 16);
 
     color_refinement.calculate(graph1, true);
-    auto factor_matrix = color_refinement.get_factor_matrix();
+    auto factor_matrix = color_refinement.get_quotient_matrix();
 
     /**
      * State 2
@@ -134,7 +134,7 @@ TEST(WLTests, Canonical)
 
     auto color_refinement2 = CanonicalColorRefinement(false);
     color_refinement2.calculate(graph2, true);
-    auto factor_matrix_2 = color_refinement2.get_factor_matrix();
+    auto factor_matrix_2 = color_refinement2.get_quotient_matrix();
 
     EXPECT_NE(factor_matrix, factor_matrix_2);
 }

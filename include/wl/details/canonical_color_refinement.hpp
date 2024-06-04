@@ -86,8 +86,8 @@ protected:
     std::vector<int> maxcdeg_;         // Indexed by color. maxcdeg[c] = max { d^+_r(v) : v is of color c }
     std::vector<int> mincdeg_;         // Indexed by color. mincdeg[c] = min { d^+_r(v) : v is of color c }
 
-    bool valid_M_;                                        // Whether the factor matrix was computed
-    std::vector<std::pair<std::pair<int, int>, int>> M_;  // Factor matrix
+    bool valid_QM_;                     // Whether the factor matrix was computed
+    std::vector<std::vector<int>> QM_;  // Factor matrix
 
     int k_;
     Stack<int> s_refine_;
@@ -95,7 +95,7 @@ protected:
 
     void split_up_color(int s);
 
-    void calculate_factor_matrix(const EdgeColoredGraph& graph);
+    void calculate_quotient_matrix(const EdgeColoredGraph& graph);
 
 public:
     CanonicalColorRefinement(int debug = 0) : debug_(debug) {}
@@ -104,16 +104,20 @@ public:
     /// @brief Calculate the canonical equitable partition of a vertex colored graph.
     /// @param graph
     /// @param factor_matrix
-    void calculate(const EdgeColoredGraph& graph, bool factor_matrix = false);
-
-    static std::vector<int> histogram(const std::vector<std::set<int>>& partition);
+    void calculate(const EdgeColoredGraph& graph, bool calculate_qm = false);
 
     /**
      * Getters
      */
     const std::vector<std::set<int>>& get_coloring() const;
-    const std::vector<std::pair<std::pair<int, int>, int>>& get_factor_matrix() const;
-    int get_coloring_function_size() const;
+    const std::vector<std::vector<int>>& get_quotient_matrix() const;
+
+    /**
+     * Translators
+     */
+
+    static int check_coloring(const std::vector<int>& alpha, bool verbose = true);
+    static std::vector<int> coloring_to_histogram(const std::vector<std::set<int>>& partition);
 };
 
 }

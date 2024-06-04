@@ -12,22 +12,28 @@
 
 namespace wl
 {
-void CanonicalColorRefinement::calculate(const EdgeColoredGraph& graph, bool factor_matrix)
+void CanonicalColorRefinement::calculate(const EdgeColoredGraph& graph, bool calculate_qm)
 {
+    const auto& alpha = graph.get_node_labels();
+
+    if (CanonicalColorRefinement::check_coloring(alpha, true) != 0)
+    {
+        throw std::runtime_error("invalid initial coloring");
+    }
     if (!std::all_of(graph.get_edge_labels().begin(), graph.get_edge_labels().end(), [](const auto& edge_label) { return edge_label == 0; }))
     {
         throw std::runtime_error("Only vertex colored graphs are supported");
     }
 
     int n = graph.get_num_nodes();
-    const auto& alpha = graph.get_node_labels();
     colour_ = std::vector<int>(n + 1, 0);
     C_ = std::vector<std::set<int>>(n + 1);
     A_ = std::vector<std::vector<int>>(n + 1);
     mincdeg_ = std::vector<int>(n + 1, -1);
     maxcdeg_ = std::vector<int>(n + 1, 0);
     cdeg_ = std::vector<int>(n + 1, 0);
-    maxcdeg_[0] = -1;
+    maxcdeg_.at(0) = -1;
+    valid_QM_ = false;
 
     // Create initial partition
     k_ = 0;
@@ -143,7 +149,7 @@ void CanonicalColorRefinement::calculate(const EdgeColoredGraph& graph, bool fac
             if (mincdeg_.at(c) < maxcdeg_.at(c))
                 colors_split.push_back(c);
         }
-        sort(colors_split.begin(), colors_split.end());
+        std::sort(colors_split.begin(), colors_split.end());
 
         if (debug_ > 0)
             std::cout << "  colors_split: " << colors_split << " (ordered)" << std::endl;
@@ -173,12 +179,10 @@ void CanonicalColorRefinement::calculate(const EdgeColoredGraph& graph, bool fac
         }
     }
 
-    // Simplify and return histogram of canonical equitable partition
+    // Simplify, calculate quotient matrix,  and return canonical equitable partition
     C_.assign(C_.begin() + 1, C_.begin() + 1 + k_);
-    if (factor_matrix)
-    {
-        calculate_factor_matrix(graph);
-    }
+    if (calculate_qm)
+        calculate_quotient_matrix(graph);
 }
 
 void CanonicalColorRefinement::split_up_color(int s)
@@ -269,9 +273,9 @@ void CanonicalColorRefinement::split_up_color(int s)
     }
 }
 
-void CanonicalColorRefinement::calculate_factor_matrix(const EdgeColoredGraph& graph)
+void CanonicalColorRefinement::calculate_quotient_matrix(const EdgeColoredGraph& graph)
 {
-    M_ = std::vector<std::pair<std::pair<int, int>, int>>();
+    QM_ = std::vector<std::vector<int>>();
     for (int i = 0; i < k_; ++i)
     {
         int u = *C_.at(i).begin();
@@ -281,18 +285,23 @@ void CanonicalColorRefinement::calculate_factor_matrix(const EdgeColoredGraph& g
             int j = colour_.at(v + 1);
             frequency.at(j - 1) += 1;
         }
-        assert(frequency.at(i) == 0);
-        frequency.at(i) = C_.at(i).size();
-        for (size_t j = 0; j < frequency.size(); ++j)
+        for (int j = 0; j < static_cast<int>(frequency.size()); ++j)
         {
             if (frequency.at(j) > 0)
-                M_.push_back(std::make_pair(std::make_pair(i + 1, j + 1), frequency.at(j)));
+            {
+                std::vector<int> entry({ i + 1, j + 1, frequency.at(j) });
+                QM_.emplace_back(std::move(entry));
+            }
         }
     }
-    valid_M_ = true;
+    valid_QM_ = true;
 }
 
-std::vector<int> CanonicalColorRefinement::histogram(const std::vector<std::set<int>>& partition)
+const std::vector<std::set<int>>& CanonicalColorRefinement::get_coloring() const { return C_; }
+
+const std::vector<std::vector<int>>& CanonicalColorRefinement::get_quotient_matrix() const { return QM_; }
+
+std::vector<int> CanonicalColorRefinement::coloring_to_histogram(const std::vector<std::set<int>>& partition)
 {
     std::vector<int> hist;
     for (size_t i = 0; i < partition.size(); ++i)
@@ -300,9 +309,53 @@ std::vector<int> CanonicalColorRefinement::histogram(const std::vector<std::set<
     return hist;
 }
 
-const std::vector<std::set<int>>& CanonicalColorRefinement::get_coloring() const { return C_; }
+int CanonicalColorRefinement::check_coloring(const std::vector<int>& alpha, bool verbose)
+{
+    int status = 0;
 
-const std::vector<std::pair<std::pair<int, int>, int>>& CanonicalColorRefinement::get_factor_matrix() const { return M_; }
+    // Check that min color in alpha is 1
+    int min_color = std::numeric_limits<int>::max();
+    for (auto const& c : alpha)
+        min_color = std::min(min_color, c);
+    if (min_color != 1)
+    {
+        status |= 1;
+        if (verbose)
+            std::cout << "check_coloring: minimum color must be 1, got " << min_color << std::endl;
+    }
+    if (min_color < 0)
+        return status;
 
-int CanonicalColorRefinement::get_coloring_function_size() const { return k_; }
+    // Check that there are no "color gaps"
+    std::vector<int> frequency, gaps;
+    for (auto const& c : alpha)
+    {
+        frequency.resize(std::max(int(frequency.size()), 1 + c), 0);
+        assert(c < static_cast<int>(frequency.size()));
+        frequency.at(c) += 1;
+    }
+
+    for (size_t i = frequency.size() - 1; i > 0; --i)
+    {
+        assert(frequency.at(i) > 0);
+        if (i > 1 and frequency.at(i - 1) == 0)
+            gaps.push_back(i - 1);
+    }
+    if (!gaps.empty())
+        status |= 2;
+
+    if (verbose and !gaps.empty())
+    {
+        std::cout << "check_coloring: color gap(s) at";
+        for (int i = gaps.size() - 1; i >= 0; --i)
+        {
+            std::cout << " " << gaps.at(i);
+            if (i > 0)
+                std::cout << ",";
+        }
+        std::cout << std::endl;
+    }
+
+    return status;
+}
 }
