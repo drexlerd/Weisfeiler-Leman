@@ -62,6 +62,7 @@ public:
 
     const std::vector<std::set<int>>& get_coloring() const;
     const std::vector<std::vector<int>>& get_quotient_matrix() const;
+    std::string get_quotient_matrix_string() const;
 
     /**
      * Setters

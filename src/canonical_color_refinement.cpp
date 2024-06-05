@@ -317,6 +317,22 @@ const std::vector<std::set<int>>& CanonicalColorRefinement::get_coloring() const
 
 const std::vector<std::vector<int>>& CanonicalColorRefinement::get_quotient_matrix() const { return QM_; }
 
+std::string CanonicalColorRefinement::get_quotient_matrix_string() const
+{
+    assert(static_cast<int>(C_.size()) == k_);
+    if (!valid_QM_)
+        throw std::runtime_error("invalid quotient matrix: call calculate() with third argument set to true");
+
+    std::string code;
+    for (auto& entry : QM_)
+    {
+        if (code != "")
+            code += "-";
+        code += std::to_string(entry.at(2)) + "@(" + std::to_string(entry.at(0)) + "," + std::to_string(entry.at(1)) + ")";
+    }
+    return code;
+}
+
 void CanonicalColorRefinement::set_debug(int debug) { debug_ = debug; }
 
 void CanonicalColorRefinement::set_use_stack(bool use_stack) { use_stack_ = use_stack; }

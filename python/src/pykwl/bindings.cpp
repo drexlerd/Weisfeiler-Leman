@@ -29,6 +29,7 @@ void init_kwl(py::module_& m)
         .def("calculate", &CanonicalColorRefinement::calculate, py::arg("graph"), py::arg("factor_matrix") = false)
         .def("get_coloring", &CanonicalColorRefinement::get_coloring)
         .def("get_quotient_matrix", &CanonicalColorRefinement::get_quotient_matrix)
+        .def("get_quotient_matrix_string", &CanonicalColorRefinement::get_quotient_matrix_string)
         .def_static("coloring_to_histogram", &CanonicalColorRefinement::coloring_to_histogram);
 
     py::class_<WeisfeilerLeman>(m, "WeisfeilerLeman")  //
