@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <deque>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -21,63 +22,12 @@
 
 namespace wl
 {
-template<typename T>
-class Stack
-{
-protected:
-    std::vector<T> stack_;
-
-public:
-    Stack() {}
-    ~Stack() {}
-
-    void initialize(int n)
-    {
-        stack_.resize(0);
-        stack_.reserve(n);
-    }
-
-    bool empty() const { return stack_.empty(); }
-    const T& top() const
-    {
-        if (!stack_.empty())
-            return stack_.back();
-        else
-            throw std::runtime_error("Attempt top() on empty stack");
-    }
-    T pop()
-    {
-        if (!stack_.empty())
-        {
-            T item = stack_.back();
-            stack_.pop_back();
-            return item;
-        }
-        else
-        {
-            throw std::runtime_error("Attempt pop() on empty stack");
-        }
-    }
-    int push(const T item)
-    {
-        stack_.push_back(item);
-        return stack_.back();
-    }
-
-    void print(std::ostream& os) const { os << stack_; }
-};
-
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const Stack<T>& stack)
-{
-    stack.print(os);
-    return os;
-}
 
 class CanonicalColorRefinement
 {
 protected:
-    const int debug_;
+    int debug_;
+    bool use_stack_;
 
     std::vector<std::set<int>> C_;     // Indexed by color. Partition. C[c] is set of vertices with color c
     std::vector<std::vector<int>> A_;  // Indexed by color. A[c] is vertices of color c adjacent to vertices of color r
@@ -90,7 +40,7 @@ protected:
     std::vector<std::vector<int>> QM_;  // Factor matrix
 
     int k_;
-    Stack<int> s_refine_;
+    std::deque<int> s_refine_;
     std::vector<bool> in_s_refine_;
 
     void split_up_color(int s);
@@ -98,7 +48,7 @@ protected:
     void calculate_quotient_matrix(const EdgeColoredGraph& graph);
 
 public:
-    CanonicalColorRefinement(int debug = 0) : debug_(debug) {}
+    CanonicalColorRefinement(int debug = 0, bool use_stack = false) : debug_(debug), use_stack_(use_stack), valid_QM_(false) {}
     ~CanonicalColorRefinement() {}
 
     /// @brief Calculate the canonical equitable partition of a vertex colored graph.
@@ -109,8 +59,16 @@ public:
     /**
      * Getters
      */
+
     const std::vector<std::set<int>>& get_coloring() const;
     const std::vector<std::vector<int>>& get_quotient_matrix() const;
+
+    /**
+     * Setters
+     */
+
+    void set_debug(int debug);
+    void set_use_stack(bool use_stack);
 
     /**
      * Translators

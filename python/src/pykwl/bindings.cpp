@@ -25,7 +25,7 @@ void init_kwl(py::module_& m)
         .def("is_identical_to", &GraphColoring::is_identical_to);
 
     py::class_<CanonicalColorRefinement>(m, "CanonicalColorRefinement")  //
-        .def(py::init<bool>())
+        .def(py::init<int, bool>(), py::arg("debug") = 0, py::arg("use_stack") = false)
         .def("calculate", &CanonicalColorRefinement::calculate, py::arg("graph"), py::arg("factor_matrix") = false)
         .def("get_coloring", &CanonicalColorRefinement::get_coloring)
         .def("get_quotient_matrix", &CanonicalColorRefinement::get_quotient_matrix)
